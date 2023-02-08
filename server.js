@@ -1,14 +1,11 @@
-const express = require('express');
-const connectDB = require('./config/db');
-const dotenv = require('dotenv');
-const userRoutes = require('./routes/userRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const {
-  notFound,
-  errorHandler,
-} = require('./middleware/errorMiddleware');
-const path = require('path');
+const express = require("express");
+const connectDB = require("./config/db");
+const dotenv = require("dotenv");
+const userRoutes = require("./routes/userRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+// const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const path = require("path");
 
 dotenv.config();
 connectDB();
@@ -20,40 +17,39 @@ app.use(express.json()); // to accept json data
 //   res.send("API Running!");
 // });
 
-app.use('/api/user', userRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/message', messageRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/message", messageRoutes);
 
 // --------------------------deployment------------------------------
 
-const __dirname1 = path.resolve();
+// const __dirname1 = path.resolve();
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname1, '/frontend/build')));
+// if (process.env.NODE_ENV !== 'production') {
+//   app.use(express.static(path.join(__dirname1, '/frontend/build')));
 
-  app.get('*', (req, res) =>
-    res.sendFile(
-      path.resolve(__dirname1, 'frontend', 'build', 'index.html')
-    )
-  );
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running..');
-  });
-}
+//   app.get('*', (req, res) =>
+//     res.sendFile(
+//       path.resolve(__dirname1, 'frontend', 'build', 'index.html')
+//     )
+//   );
+// } else {
+//   app.get('/', (req, res) => {
+//     res.send('API is running..');
+//   });
+// }
 
 // --------------------------deployment------------------------------
 
 // Error Handling middlewares
-app.use(notFound);
-app.use(errorHandler);
-
+// app.use(notFound);
+// app.use(errorHandler);
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static("client/build"));
+  app.use(express.static("Client/build"));
   app.get("*", (req, res) => {
     res.sendFile(
-      path.resolve(__dirname + "/client/build/index.html"),
+      path.resolve(__dirname + "/Client/build/index.html"),
       function (err) {
         if (err) {
           console.log(err);
@@ -70,46 +66,42 @@ const server = app.listen(
   console.log(`Server running on PORT ${PORT}...`.yellow.bold)
 );
 
-const io = require('socket.io')(server, {
+const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: 'http://localhost:3000',
+    origin: "http://localhost:3000",
     // credentials: true,
   },
 });
 
-io.on('connection', (socket) => {
-  console.log('Connected to socket.io');
-  socket.on('setup', (userData) => {
+io.on("connection", (socket) => {
+  console.log("Connected to socket.io");
+  socket.on("setup", (userData) => {
     socket.join(userData._id);
-    socket.emit('connected');
+    socket.emit("connected");
   });
 
-  socket.on('join chat', (room) => {
+  socket.on("join chat", (room) => {
     socket.join(room);
-    console.log('User Joined Room: ' + room);
+    console.log("User Joined Room: " + room);
   });
-  socket.on('typing', (room) => socket.in(room).emit('typing'));
-  socket.on('stop typing', (room) =>
-    socket.in(room).emit('stop typing')
-  );
+  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
-  socket.on('new message', (newMessageRecieved) => {
+  socket.on("new message", (newMessageRecieved) => {
     var chat = newMessageRecieved.chat;
 
-    if (!chat.users) return console.log('chat.users not defined');
+    if (!chat.users) return console.log("chat.users not defined");
 
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
 
-      socket
-        .in(user._id)
-        .emit('message recieved', newMessageRecieved);
+      socket.in(user._id).emit("message recieved", newMessageRecieved);
     });
   });
 
-  socket.off('setup', () => {
-    console.log('USER DISCONNECTED');
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
     socket.leave(userData._id);
   });
 });
