@@ -45,7 +45,7 @@ app.use("/api/message", messageRoutes);
 // app.use(notFound);
 // app.use(errorHandler);
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV === "production") {
   app.use(express.static("Client/build"));
   app.get("*", (req, res) => {
     res.sendFile(
