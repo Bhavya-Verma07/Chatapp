@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
+const { decryptdata } = require("./encryption");
 
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
@@ -66,6 +67,14 @@ const fetchChats = asyncHandler(async (req, res) => {
           path: "latestMessage.sender",
           select: "name pic email",
         });
+        // console.log(results);
+        for (const m of results){
+          if(m.latestMessage.iv){
+            m.latestMessage.content=decryptdata(m.latestMessage.content, m.latestMessage.iv);
+          }
+          // console.log(m.latestMessage);  //to decrypt
+  
+        }
         res.status(200).send(results);
       });
   } catch (error) {

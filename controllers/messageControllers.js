@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Message = require("../models/messageModel");
 const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
+const { encryptdata, decryptdata } = require("./encryption");
 
 //@description     Get all Messages
 //@route           GET /api/Message/:chatId
@@ -10,7 +11,15 @@ const allMessages = asyncHandler(async (req, res) => {
   try {
     const messages = await Message.find({ chat: req.params.chatId })
       .populate("sender", "name pic email")
-      .populate("chat");
+      .populate("chat").lean();
+      for (const m of messages){
+        if(m.iv){
+          m.content=decryptdata(m.content, m.iv);
+        }
+        // console.log(m.content);  //to decrypt
+
+      }
+      // console.log(messages);
     res.json(messages);
   } catch (error) {
     res.status(400);
@@ -28,11 +37,14 @@ const sendMessage = asyncHandler(async (req, res) => {
     console.log("Invalid data passed into request");
     return res.sendStatus(400);
   }
-
+console.log(content);
+let encryptedmessage = encryptdata(content);
+console.log(encryptedmessage);
   var newMessage = {
     sender: req.user._id,
-    content: content,
+    content: encryptedmessage.encryptedData,
     chat: chatId,
+    iv: encryptedmessage.iv
   };
 
   try {
@@ -44,6 +56,11 @@ const sendMessage = asyncHandler(async (req, res) => {
       path: "chat.users",
       select: "name pic email",
     });
+    
+      if(message.iv){
+        message.content=decryptdata(message.content, message.iv);
+      }
+      // console.log(m.content);  //to decrypt
 
     await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message });
 
