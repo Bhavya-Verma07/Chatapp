@@ -69,7 +69,7 @@ const fetchChats = asyncHandler(async (req, res) => {
         });
         // console.log(results);
         for (const m of results){
-          if(m.latestMessage.iv){
+          if(m?.latestMessage?.iv){
             m.latestMessage.content=decryptdata(m.latestMessage.content, m.latestMessage.iv);
           }
           // console.log(m.latestMessage);  //to decrypt
